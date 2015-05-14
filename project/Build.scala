@@ -5,6 +5,9 @@ import Dependencies._
 import sbtassembly.Plugin._
 import sbtassembly.AssemblyUtils._
 import AssemblyKeys._
+import Keys._
+import com.typesafe.sbt.packager.Keys._
+import com.typesafe.sbt.SbtNativePackager._
 
 object BuildSettings {
   val projectName = "sillycat-graph"
@@ -28,6 +31,10 @@ object ApplicationBuild extends Build {
         libraryDependencies ++= baseDeps,
         mergeStrategy in assembly := mergeFirst
     )
+    ++
+    Packaging.settings
+    ++
+    Packaging.server
   ) settings(
     mainClass in assembly := Some("com.sillycat.graph.app.ExecutorApp"),
     excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
@@ -35,6 +42,12 @@ object ApplicationBuild extends Build {
     },
     artifact in (Compile, assembly) ~= { art =>
       art.copy(`classifier` = Some("assembly"))
+    },
+    mappings in Universal <++= sourceDirectory  map { src =>
+      val resources = src / "main" / "resources"
+      val log4j = resources / "log4j.properties"
+      val reference = resources / "application.conf"
+      Seq(log4j -> "conf/log4j.properties", reference -> "conf/application.conf")
     }
   )
 
